@@ -180,6 +180,7 @@ public class Bhop {
     }
 
 
+
     private static double clamp(double val, double min, double max) {
         return Math.max(min, Math.min(max, val));
     }
@@ -225,8 +226,9 @@ public class Bhop {
         if (DmA != 0 || SmW != 0) {
             KeyAngleData = new Vec3(DmA * ycos + SmW * ysin, 0, SmW * ycos - DmA * ysin).normalize();
         }
-        player.movem
-        Vec3 PlayerSpeed = player.getDeltaMovement();
+
+        // bug is present here but idk how to fix it, though im also suspicious about player.getDeltaMovement for the equivalent of "player.getMotion"
+        Vec3 PlayerSpeed = player.getDeltaMovement(); // player.getSpeed() exists but idk
         double DotProduct = PlayerSpeed.dot(KeyAngleData);
         if (DotProduct < GAIN_VAR) {
             PlayerSpeed = PlayerSpeed.add(KeyAngleData.scale(GAIN_VAR - DotProduct));
@@ -235,37 +237,6 @@ public class Bhop {
         nextAirMotion = player.getDeltaMovement();
         prevRotationYawHead = Math.toRadians(Math.atan2(player.getLookAngle().x, player.getLookAngle().y));
     }
-
-
-//        motion = player.getMotion();
-//        double yaw = Math.toRadians(player.rotationYawHead);
-//        double ycos = Math.cos(yaw);
-//        double ysin = -Math.sin(yaw);
-//        double optimalScore = clamp(Math.abs((yaw - Math.toRadians(player.prevRotationYawHead) + pi) % tau - pi) / Math.atan2(GAIN_VAR, units), 0, 2);
-//        // optimalScore = 1-Math.abs(1-optimalScore);
-//        // This clamps it to 0 -> 1 instead of 0 -> 2 but impossible to know if over or under strafing
-//        int D = RIGHT_KEY.isKeyDown() ? 1 : 0;
-//        int A = LEFT_KEY.isKeyDown() ? 1 : 0;
-//        int W = FORWARD_KEY.isKeyDown() ? 1 : 0;
-//        int S = BACK_KEY.isKeyDown() ? 1 : 0;
-//        int DmA = A-D;
-//        int SmW = W-S;
-//        units = units * 50.0;
-//        optimalScore = optimalScore * 100.0;
-//        player.sendStatusMessage(ITextComponent.getTextComponentOrEmpty(String.format("Units: %.2f | Gauge score: %.2f%%", units, optimalScore)), true); // change to be GUIs, can be toggled with client side commands too
-//
-//        Vector3d KeyAngleData = Vector3d.ZERO;
-//        if (DmA != 0 || SmW != 0) {
-//            KeyAngleData = new Vector3d(DmA * ycos + SmW * ysin, 0, SmW * ycos - DmA * ysin).normalize();
-//        }
-//        Vector3d PlayerSpeed = player.getMotion();
-//        double DotProduct = PlayerSpeed.dotProduct(KeyAngleData);
-//        if (DotProduct < GAIN_VAR) {
-//            PlayerSpeed = PlayerSpeed.add(KeyAngleData.scale(GAIN_VAR - DotProduct));
-//        }
-//        player.setMotion(PlayerSpeed);
-//        nextAirMotion = player.getMotion();
-//    }
 
     // You can use EventBusSubscriber to automatically register all static methods in the class annotated with @SubscribeEvent
     @Mod.EventBusSubscriber(modid = MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
