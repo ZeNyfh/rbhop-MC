@@ -170,19 +170,15 @@ public class Bhop {
     public void onTick(TickEvent.PlayerTickEvent event) {
         try {
             LocalPlayer player = mc.player;
-            if (!physEnabled) {
-                assert player != null;
-                if (player.input.jumping) {
-                    player.jumpFromGround();
-                }
-                return;
-            }
             assert player != null;
             player.setSprinting(false);
-            motion = player.getDeltaMovement();
-            airAccelerate(player);
+            if (player.input.jumping) {
+                motion = player.getDeltaMovement();
+                airAccelerate(player);
+            }
         } catch (Exception ignored){}
     }
+
 
     private static double clamp(double val, double min, double max) {
         return Math.max(min, Math.min(max, val));
@@ -190,18 +186,16 @@ public class Bhop {
     private static final double pi = Math.PI;
     private static final double tau = pi*2;
     private static Vec3 nextAirMotion = Vec3.ZERO;
+    private static double prevRotationYawHead = 0d;
     public static void airAccelerate(LocalPlayer player) {
         // this will update for every tick in the onTick() event
-        if (player.onGround() && player.input.jumping) {
+        if (player.onGround() && !player.input.jumping) {
             nextAirMotion = Vec3.ZERO;
             return;
         }
-        if (player.horizontalCollision) {
-            double frictionFactor = 0.8; // adjust to whatever value seems right
-            Vec3 frictionForce = player.getDeltaMovement().multiply(new Vec3(-frictionFactor, 1, -frictionFactor));
-            nextAirMotion = nextAirMotion.add(frictionForce);
+        if (player.horizontalCollision || player.minorHorizontalCollision){
+            nextAirMotion = Vec3.ZERO;
         }
-
         if (nextAirMotion != Vec3.ZERO) {
             player.setDeltaMovement(nextAirMotion.x, motion.y, nextAirMotion.z);
             motion = player.getDeltaMovement();
@@ -211,10 +205,10 @@ public class Bhop {
             player.jumpFromGround();
         }
         motion = player.getDeltaMovement();
-        double yaw = Math.toRadians(player.getRotationVector().x); // this COULD be wrong
+        double yaw = Math.toRadians(Math.atan2(player.getLookAngle().y, player.getLookAngle().x));
         double ycos = Math.cos(yaw);
         double ysin = -Math.sin(yaw);
-        //double optimalScore = clamp(Math.abs((yaw - Math.toRadians(player.prevRotationYawHead) + pi) % tau - pi) / Math.atan2(GAIN_VAR, units), 0, 2);
+        double optimalScore = clamp(Math.abs((yaw - Math.toRadians(prevRotationYawHead) + pi) % tau - pi) / Math.atan2(GAIN_VAR, units), 0, 2);
         // optimalScore = 1-Math.abs(1-optimalScore);
         // This clamps it to 0 -> 1 instead of 0 -> 2 but impossible to know if over or under strafing
         int D = player.input.right ? 1 : 0;
@@ -224,21 +218,54 @@ public class Bhop {
         int DmA = A-D;
         int SmW = W-S;
         units = units * 50.0;
-        //optimalScore = optimalScore * 100.0;
-        player.displayClientMessage(Component.literal("Units: " + units + ""), true); // change to be GUIs, can be toggled with client side commands too
+        optimalScore = optimalScore * 100.0;
+        player.sendSystemMessage(Component.literal("Units: " + units + " | " + "Gauge score: " + optimalScore)); // change to be GUIs, can be toggled with client side commands too
 
         Vec3 KeyAngleData = Vec3.ZERO;
         if (DmA != 0 || SmW != 0) {
             KeyAngleData = new Vec3(DmA * ycos + SmW * ysin, 0, SmW * ycos - DmA * ysin).normalize();
         }
-        float PlayerSpeed = player.getSpeed();
-        double DotProduct = PlayerSpeed * (KeyAngleData.x + KeyAngleData.z);
+        player.movem
+        Vec3 PlayerSpeed = player.getDeltaMovement();
+        double DotProduct = PlayerSpeed.dot(KeyAngleData);
         if (DotProduct < GAIN_VAR) {
-            PlayerSpeed += (float) (KeyAngleData.x + KeyAngleData.z) * (GAIN_VAR - DotProduct);
+            PlayerSpeed = PlayerSpeed.add(KeyAngleData.scale(GAIN_VAR - DotProduct));
         }
-        player.setSpeed(PlayerSpeed);
+        player.setDeltaMovement(PlayerSpeed);
         nextAirMotion = player.getDeltaMovement();
+        prevRotationYawHead = Math.toRadians(Math.atan2(player.getLookAngle().x, player.getLookAngle().y));
     }
+
+
+//        motion = player.getMotion();
+//        double yaw = Math.toRadians(player.rotationYawHead);
+//        double ycos = Math.cos(yaw);
+//        double ysin = -Math.sin(yaw);
+//        double optimalScore = clamp(Math.abs((yaw - Math.toRadians(player.prevRotationYawHead) + pi) % tau - pi) / Math.atan2(GAIN_VAR, units), 0, 2);
+//        // optimalScore = 1-Math.abs(1-optimalScore);
+//        // This clamps it to 0 -> 1 instead of 0 -> 2 but impossible to know if over or under strafing
+//        int D = RIGHT_KEY.isKeyDown() ? 1 : 0;
+//        int A = LEFT_KEY.isKeyDown() ? 1 : 0;
+//        int W = FORWARD_KEY.isKeyDown() ? 1 : 0;
+//        int S = BACK_KEY.isKeyDown() ? 1 : 0;
+//        int DmA = A-D;
+//        int SmW = W-S;
+//        units = units * 50.0;
+//        optimalScore = optimalScore * 100.0;
+//        player.sendStatusMessage(ITextComponent.getTextComponentOrEmpty(String.format("Units: %.2f | Gauge score: %.2f%%", units, optimalScore)), true); // change to be GUIs, can be toggled with client side commands too
+//
+//        Vector3d KeyAngleData = Vector3d.ZERO;
+//        if (DmA != 0 || SmW != 0) {
+//            KeyAngleData = new Vector3d(DmA * ycos + SmW * ysin, 0, SmW * ycos - DmA * ysin).normalize();
+//        }
+//        Vector3d PlayerSpeed = player.getMotion();
+//        double DotProduct = PlayerSpeed.dotProduct(KeyAngleData);
+//        if (DotProduct < GAIN_VAR) {
+//            PlayerSpeed = PlayerSpeed.add(KeyAngleData.scale(GAIN_VAR - DotProduct));
+//        }
+//        player.setMotion(PlayerSpeed);
+//        nextAirMotion = player.getMotion();
+//    }
 
     // You can use EventBusSubscriber to automatically register all static methods in the class annotated with @SubscribeEvent
     @Mod.EventBusSubscriber(modid = MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
