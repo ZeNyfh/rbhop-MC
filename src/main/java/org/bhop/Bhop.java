@@ -5,6 +5,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.BlockItem;
@@ -170,14 +171,21 @@ public class Bhop {
     public void onTick(TickEvent.PlayerTickEvent event) {
         try {
             LocalPlayer player = mc.player;
-            assert player != null;
-            player.setSprinting(false);
-            if (player.input.jumping) {
-                motion = player.getDeltaMovement();
-                airAccelerate(player);
+            if (player == null) {
+                return;
             }
-        } catch (Exception ignored){}
+
+            player.setSprinting(false);
+            motion = player.getDeltaMovement();
+            if (player.input.jumping) {
+                airAccelerate(player);
+            } else if (player.onGround()) {
+                nextAirMotion = Vec3.ZERO;
+            }
+        } catch (Exception ignored) {
+        }
     }
+
 
 
 
@@ -185,17 +193,16 @@ public class Bhop {
         return Math.max(min, Math.min(max, val));
     }
     private static final double pi = Math.PI;
-    private static final double tau = pi*2;
+    private static final double tau = 2*Math.PI;
     private static Vec3 nextAirMotion = Vec3.ZERO;
-    private static double prevRotationYawHead = 0d;
+    private static double yaw = 0;
+    private static double prevRotationYawHead = yaw;
     public static void airAccelerate(LocalPlayer player) {
         // this will update for every tick in the onTick() event
-        if (player.onGround() && !player.input.jumping) {
-            nextAirMotion = Vec3.ZERO;
-            return;
-        }
+        final double frictionFactor = 0.8;
         if (player.horizontalCollision || player.minorHorizontalCollision){
-            nextAirMotion = Vec3.ZERO;
+            // Apply the friction force to reduce the movement
+            nextAirMotion = new Vec3(player.getDeltaMovement().x * frictionFactor, player.getDeltaMovement().y, player.getDeltaMovement().z * frictionFactor);
         }
         if (nextAirMotion != Vec3.ZERO) {
             player.setDeltaMovement(nextAirMotion.x, motion.y, nextAirMotion.z);
@@ -206,11 +213,13 @@ public class Bhop {
             player.jumpFromGround();
         }
         motion = player.getDeltaMovement();
-        double yaw = Math.toRadians(Math.atan2(player.getLookAngle().y, player.getLookAngle().x));
+
+        yaw = Math.atan2(-player.getLookAngle().x, player.getLookAngle().z);
+
         double ycos = Math.cos(yaw);
         double ysin = -Math.sin(yaw);
         double optimalScore = clamp(Math.abs((yaw - Math.toRadians(prevRotationYawHead) + pi) % tau - pi) / Math.atan2(GAIN_VAR, units), 0, 2);
-        // optimalScore = 1-Math.abs(1-optimalScore);
+        optimalScore = 1-Math.abs(1-optimalScore);
         // This clamps it to 0 -> 1 instead of 0 -> 2 but impossible to know if over or under strafing
         int D = player.input.right ? 1 : 0;
         int A = player.input.left ? 1 : 0;
@@ -219,23 +228,23 @@ public class Bhop {
         int DmA = A-D;
         int SmW = W-S;
         units = units * 50.0;
+        String stringUnits = String.format("%.2f", units);
         optimalScore = optimalScore * 100.0;
-        player.sendSystemMessage(Component.literal("Units: " + units + " | " + "Gauge score: " + optimalScore)); // change to be GUIs, can be toggled with client side commands too
-
+        player.displayClientMessage(Component.literal("Units: " + stringUnits + " | " + "Gauge score: " + optimalScore), true); // change to be GUIs, can be toggled with client side commands too
         Vec3 KeyAngleData = Vec3.ZERO;
         if (DmA != 0 || SmW != 0) {
             KeyAngleData = new Vec3(DmA * ycos + SmW * ysin, 0, SmW * ycos - DmA * ysin).normalize();
         }
 
         // bug is present here but idk how to fix it, though im also suspicious about player.getDeltaMovement for the equivalent of "player.getMotion"
-        Vec3 PlayerSpeed = player.getDeltaMovement(); // player.getSpeed() exists but idk
+        Vec3 PlayerSpeed = player.getDeltaMovement();
         double DotProduct = PlayerSpeed.dot(KeyAngleData);
         if (DotProduct < GAIN_VAR) {
             PlayerSpeed = PlayerSpeed.add(KeyAngleData.scale(GAIN_VAR - DotProduct));
         }
         player.setDeltaMovement(PlayerSpeed);
         nextAirMotion = player.getDeltaMovement();
-        prevRotationYawHead = Math.toRadians(Math.atan2(player.getLookAngle().x, player.getLookAngle().y));
+        prevRotationYawHead = yaw;
     }
 
     // You can use EventBusSubscriber to automatically register all static methods in the class annotated with @SubscribeEvent
