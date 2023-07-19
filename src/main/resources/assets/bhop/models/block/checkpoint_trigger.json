@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "bhop:block/checkpoint_trigger"
+  },
+  "render_type": "cutout"
+}

@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "bhop:block/end_trigger"
+    }
+  }
+}

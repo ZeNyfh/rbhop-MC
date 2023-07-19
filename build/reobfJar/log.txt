@@ -142,9 +142,44 @@ Writing Output: C:\Users\ZeNyfh\IdeaProjects\bhop\build\reobfJar\output.jar
   META-INF/
   META-INF/MANIFEST.MF
   META-INF/mods.toml
+  assets/
+  assets/bhop/
+  assets/bhop/blockstates/
+  assets/bhop/blockstates/checkpoint_trigger.json
+  assets/bhop/blockstates/end_trigger.json
+  assets/bhop/blockstates/kill_trigger.json
+  assets/bhop/blockstates/spawn_trigger.json
+  assets/bhop/blockstates/tp_trigger.json
+  assets/bhop/lang/
+  assets/bhop/lang/en_us.json
+  assets/bhop/models/
+  assets/bhop/models/block/
+  assets/bhop/models/block/checkpoint_trigger.json
+  assets/bhop/models/block/end_trigger.json
+  assets/bhop/models/block/kill_trigger.json
+  assets/bhop/models/block/spawn_trigger.json
+  assets/bhop/models/block/tp_trigger.json
+  assets/bhop/models/item/
+  assets/bhop/models/item/checkpoint_trigger.json
+  assets/bhop/models/item/end_trigger.json
+  assets/bhop/models/item/kill_trigger.json
+  assets/bhop/models/item/spawn_trigger.json
+  assets/bhop/models/item/tp_trigger.json
+  assets/bhop/textures/
+  assets/bhop/textures/block/
+  assets/bhop/textures/block/checkpoint_trigger.png
+  assets/bhop/textures/block/end_trigger.png
+  assets/bhop/textures/block/kill_trigger.png
+  assets/bhop/textures/block/spawn_trigger.png
+  assets/bhop/textures/block/tp_trigger.png
   org/
   org/bhop/
   org/bhop/Bhop$ClientModEvents.class
   org/bhop/Bhop.class
   org/bhop/Config.class
+  org/bhop/blocks/
+  org/bhop/blocks/BhopBlocks.class
+  org/bhop/items/
+  org/bhop/items/BhopCreativeModeTabs.class
+  org/bhop/items/BhopItems.class
   pack.mcmeta
