@@ -118,20 +118,22 @@ public class Bhop {
 
     @SubscribeEvent
     public void onTick(TickEvent.PlayerTickEvent event) {
-        try {
-            LocalPlayer player = mc.player;
-            if (player == null) {
-                return;
-            }
+        if (event.phase == TickEvent.Phase.END) {
+            try {
+                LocalPlayer player = mc.player;
+                if (player == null) {
+                    return;
+                }
 
-            player.setSprinting(false);
-            motion = player.getDeltaMovement();
-            if (player.input.jumping || !player.onGround()) {
-                airAccelerate(player);
-            } else if (player.onGround()) {
-                nextAirMotion = Vec3.ZERO;
+                player.setSprinting(false);
+                motion = player.getDeltaMovement();
+                if (player.input.jumping || !player.onGround()) {
+                    airAccelerate(player);
+                } else if (player.onGround()) {
+                    nextAirMotion = Vec3.ZERO;
+                }
+            } catch (Exception ignored) {
             }
-        } catch (Exception ignored) {
         }
     }
 
