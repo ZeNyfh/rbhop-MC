@@ -54,7 +54,7 @@ public class Bhop {
     private static final Logger LOGGER = LogUtils.getLogger();
 
     public static final Minecraft mc = Minecraft.getInstance();
-    private static final double GAIN_VAR = 0.11;
+    private static final double GAIN_VAR = 0.1;
     private static final double TICK_RATE = 0.05; // 1/20d
 
     public static List<Player> players;
@@ -89,9 +89,7 @@ public class Bhop {
     }
 
 
-    private static Vec3 horizontalMotion = Vec3.ZERO;
-    private static double verticalMotion = 0;
-    public static Vec3 motion = new Vec3(horizontalMotion.x, verticalMotion, horizontalMotion.z);
+    public static Vec3 motion = Vec3.ZERO;
     public static boolean physEnabled = true;
     @SubscribeEvent
     public void onKeyInput(InputEvent event) {
@@ -102,12 +100,6 @@ public class Bhop {
                 physEnabled = !physEnabled;
                 assert mc.player != null;
                 mc.player.displayClientMessage(Component.literal("bhop physics are now: " + physEnabled), true);
-            }
-            if (mc.player.input.jumping) {
-                if (player.onGround()) {
-                    horizontalMotion = new Vec3(player.getDeltaMovement().x, 0, player.getDeltaMovement().z);
-                    verticalMotion = -0.5;
-                }
             }
         } catch (Exception ignored){}
     }
@@ -134,7 +126,7 @@ public class Bhop {
 
             player.setSprinting(false);
             motion = player.getDeltaMovement();
-            if (player.input.jumping) {
+            if (player.input.jumping || !player.onGround()) {
                 airAccelerate(player);
             } else if (player.onGround()) {
                 nextAirMotion = Vec3.ZERO;
@@ -152,40 +144,38 @@ public class Bhop {
     private static final double pi = Math.PI;
     private static final double tau = 2*Math.PI;
     private static Vec3 nextAirMotion = Vec3.ZERO;
-    private static double yaw = 0;
-    private static double prevRotationYawHead = yaw;
+    private static double prevRotationYawHead = 0;
     public static void airAccelerate(LocalPlayer player) {
         // this will update for every tick in the onTick() event
         final double frictionFactor = 0.8;
         if (player.horizontalCollision || player.minorHorizontalCollision){
             // Apply the friction force to reduce the movement
-            nextAirMotion = new Vec3(player.getDeltaMovement().x * frictionFactor, player.getDeltaMovement().y, player.getDeltaMovement().z * frictionFactor);
+            Vec3 deltaM = player.getDeltaMovement();
+            nextAirMotion = new Vec3(deltaM.x * frictionFactor, deltaM.y, deltaM.z * frictionFactor);
         }
         if (nextAirMotion != Vec3.ZERO) {
             player.setDeltaMovement(nextAirMotion.x, motion.y, nextAirMotion.z);
-            motion = player.getDeltaMovement();
         }
-        double units = Math.sqrt(Math.pow(motion.x, 2) + Math.pow(motion.z, 2));
         if (player.onGround()) {
             player.jumpFromGround();
         }
         motion = player.getDeltaMovement();
+        double units = Math.sqrt(Math.pow(motion.x, 2) + Math.pow(motion.z, 2));
 
-        yaw = Math.atan2(-player.getLookAngle().x, player.getLookAngle().z);
+        double yaw = Math.atan2(-player.getLookAngle().x, player.getLookAngle().z);
 
         double ycos = Math.cos(yaw);
         double ysin = -Math.sin(yaw);
-        double optimalScore = clamp(Math.abs((yaw - Math.toRadians(prevRotationYawHead) + pi) % tau - pi) / Math.atan2(GAIN_VAR, units), 0, 2);
+        double optimalScore = clamp(Math.abs((yaw - prevRotationYawHead + pi) % tau - pi) / Math.atan2(GAIN_VAR, units), 0, 2);
         optimalScore = 1-Math.abs(1-optimalScore);
-        // This clamps it to 0 -> 1 instead of 0 -> 2 but impossible to know if over or under strafing
+        // This clamps it to 0 -> 1 -> 0 instead of 0 -> 2 but impossible to know if over or under strafing
         int D = player.input.right ? 1 : 0;
         int A = player.input.left ? 1 : 0;
         int W = player.input.up ? 1 : 0;
         int S = player.input.down ? 1 : 0;
         int DmA = A-D;
         int SmW = W-S;
-        units = units * 50.0;
-        String stringUnits = String.format("%.2f", units);
+        String stringUnits = String.format("%.2f", units * 50.0);
         optimalScore = optimalScore * 100.0;
         player.displayClientMessage(Component.literal("Units: " + stringUnits + " | " + "Gauge score: " + optimalScore), true); // change to be GUIs, can be toggled with client side commands too
         Vec3 KeyAngleData = Vec3.ZERO;
@@ -193,7 +183,6 @@ public class Bhop {
             KeyAngleData = new Vec3(DmA * ycos + SmW * ysin, 0, SmW * ycos - DmA * ysin).normalize();
         }
 
-        // bug is present here but idk how to fix it, though im also suspicious about player.getDeltaMovement for the equivalent of "player.getMotion"
         Vec3 PlayerSpeed = player.getDeltaMovement();
         double DotProduct = PlayerSpeed.dot(KeyAngleData);
         if (DotProduct < GAIN_VAR) {
