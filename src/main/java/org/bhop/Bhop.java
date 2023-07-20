@@ -36,7 +36,7 @@ public class Bhop {
     public static final String MODID = "bhop";
     public static final Minecraft mc = Minecraft.getInstance();
     public static final Lazy<KeyMapping> TOGGLEKEY = Lazy.of(
-            () -> new KeyMapping("key.bhop.disable_bhop", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_K, "key.categories.bhop.bhop_binds"
+            () -> new KeyMapping("key.bhop.toggle_bhop", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_K, "key.categories.bhop.bhop_binds"
             ));
     private static final Logger LOGGER = LogUtils.getLogger();
     private static final double GAIN_VAR = 0.1;
@@ -140,7 +140,7 @@ public class Bhop {
     @SubscribeEvent
     public void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
 //      players.add(event.getPlayer());
-        event.getEntity().displayClientMessage(Component.literal("Thank you for using the bhop mod based on the Roblox bhop physics!\nyou can use the \"" + TOGGLEKEY.get().getName() + "\" key on your keyboard to disable the physics at any time."), false);
+        event.getEntity().displayClientMessage(Component.literal("Thank you for using the bhop mod based on the Roblox bhop physics!\nyou can use the \"" +  ((char) TOGGLEKEY.get().getKey().getValue()) + "\" key on your keyboard to disable the physics at any time."), false);
     }
 
     @SubscribeEvent
@@ -153,7 +153,7 @@ public class Bhop {
                     return;
                 }
 
-                if (TOGGLEKEY.get().isActiveAndMatches(InputConstants.getKey("key.bhop.disable_bhop")) && TOGGLEKEY.get().isDown()) {
+                if (TOGGLEKEY.get().isDown()) {
                     TOGGLEKEY.get().setDown(false);
                     physEnabled = !physEnabled;
                     mc.player.displayClientMessage(Component.literal("bhop physics are now: " + physEnabled), true);

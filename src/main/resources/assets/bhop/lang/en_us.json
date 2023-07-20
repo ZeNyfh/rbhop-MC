@@ -7,6 +7,6 @@
   "block.bhop.end_trigger": "End Trigger",
   "block.bhop.tp_trigger": "TP Trigger",
 
-  "key.bhop.disable_bhop": "Disable bhop Physics",
+  "key.bhop.toggle_bhop": "Toggle bhop Physics",
   "key.categories.bhop.bhop_binds": "Bhop Binds"
 }
