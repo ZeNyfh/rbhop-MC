@@ -1,9 +1,0 @@
-Manifest-Version: 1.0
-Specification-Title: bhop
-Specification-Vendor: 
-Specification-Version: 1
-Implementation-Title: bhop
-Implementation-Version: org
-Implementation-Vendor: 
-Implementation-Timestamp: 2023-07-19T19:02:24+0100
-
