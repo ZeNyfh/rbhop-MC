@@ -6,6 +6,7 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
@@ -21,7 +22,9 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.minecraftforge.fml.event.lifecycle.FMLDedicatedServerSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.server.ServerLifecycleHooks;
 import org.bhop.blocks.BhopBlocks;
 import org.bhop.items.BhopCreativeModeTabs;
 import org.bhop.items.BhopItems;
@@ -34,7 +37,7 @@ import java.util.List;
 @Mod(Bhop.MODID)
 public class Bhop {
     public static final String MODID = "bhop";
-    public static final Minecraft mc = Minecraft.getInstance();
+    public static Minecraft mc = Minecraft.getInstance();
     public static final Lazy<KeyMapping> TOGGLEKEY = Lazy.of(
             () -> new KeyMapping("key.bhop.toggle_bhop", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_K, "key.categories.bhop.bhop_binds"
             ));
@@ -62,7 +65,6 @@ public class Bhop {
         modEventBus.addListener(this::registerBindings);
         MinecraftForge.EVENT_BUS.register(this);
     }
-
     private static double clamp(double val, double min, double max) {
         return Math.max(min, Math.min(max, val));
     }
@@ -134,12 +136,11 @@ public class Bhop {
 
     @SubscribeEvent
     public void onPlayerLeave(PlayerEvent.PlayerLoggedOutEvent event) {
-//        players.remove(event.getPlayer());
+
     }
 
     @SubscribeEvent
     public void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
-//      players.add(event.getPlayer());
         event.getEntity().displayClientMessage(Component.literal("Thank you for using the bhop mod based on the Roblox bhop physics!\nyou can use the \"" +  ((char) TOGGLEKEY.get().getKey().getValue()) + "\" key on your keyboard to disable the physics at any time."), false);
     }
 
@@ -176,7 +177,20 @@ public class Bhop {
         }
     }
 
-    // You can use EventBusSubscriber to automatically register all static methods in the class annotated with @SubscribeEvent
+    @Mod.EventBusSubscriber(modid = MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.DEDICATED_SERVER)
+    public static class ServerModEvents {
+
+        @SubscribeEvent
+        public static void onServerSetup(FMLDedicatedServerSetupEvent event) {
+            LOGGER.info("BhopServer has started.");
+            MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
+            if (server.isDedicatedServer() && server.isRunning()) {
+                BhopServer serverOnly = new BhopServer();
+                serverOnly.executeServerSide();
+            }
+        }
+    }
+
     @Mod.EventBusSubscriber(modid = MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
     public static class ClientModEvents {
 
