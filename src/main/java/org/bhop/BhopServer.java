@@ -1,22 +1,34 @@
 package org.bhop;
 
-import net.minecraft.network.chat.Component;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.server.ServerLifecycleHooks;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.event.lifecycle.FMLDedicatedServerSetupEvent;
 
-import java.util.List;
+import static org.bhop.Bhop.LOGGER;
+
+@Mod.EventBusSubscriber(modid = Bhop.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class BhopServer {
-    @OnlyIn(Dist.DEDICATED_SERVER)
-    public void executeServerSide() {
-        try {
-            MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
-            List<ServerPlayer> players = server.getPlayerList().getPlayers();
-            for (ServerPlayer player : players) {
-                player.sendSystemMessage(Component.literal("test"));
-            }
-        } catch (Exception e){e.printStackTrace();}
+    @SubscribeEvent
+    public static void onServerTick(TickEvent.ServerTickEvent event) {
+        if (event.phase == TickEvent.Phase.START) {
+
+        }
+    }
+
+    @SubscribeEvent
+    public static void onServerSetup(FMLDedicatedServerSetupEvent event) {
+        LOGGER.info("Bhop server has started");
+    }
+
+    @SubscribeEvent
+    public static void onServerPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
+
+    }
+
+    @SubscribeEvent
+    public static void onServerPlayerLeave(PlayerEvent.PlayerLoggedOutEvent event) {
+
     }
 }

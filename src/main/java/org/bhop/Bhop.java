@@ -6,65 +6,65 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.Lazy;
-import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.fml.event.lifecycle.FMLDedicatedServerSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.server.ServerLifecycleHooks;
 import org.bhop.blocks.BhopBlocks;
-import org.bhop.items.BhopCreativeModeTabs;
 import org.bhop.items.BhopItems;
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
 
-import java.util.List;
+import static org.bhop.items.BhopCreativeModeTabs.CREATIVE_MODE_TABS;
 
 // The value here should match an entry in the META-INF/mods.toml file
 @Mod(Bhop.MODID)
 public class Bhop {
     public static final String MODID = "bhop";
-    public static Minecraft mc = Minecraft.getInstance();
-    public static final Lazy<KeyMapping> TOGGLEKEY = Lazy.of(
-            () -> new KeyMapping("key.bhop.toggle_bhop", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_K, "key.categories.bhop.bhop_binds"
-            ));
-    private static final Logger LOGGER = LogUtils.getLogger();
+    public static Minecraft mc = null;
+    public static Lazy<KeyMapping> TOGGLEKEY = null;
+    public static final Logger LOGGER = LogUtils.getLogger();
     private static final double GAIN_VAR = 0.1;
-    private static final double TICK_RATE = 0.05; // 1/20d
     private static final double pi = Math.PI;
     private static final double tau = 2 * Math.PI;
-    public static List<Player> players;
-    public static int rtvCount = 0;
     public static Vec3 motion = Vec3.ZERO;
     public static boolean physEnabled = true;
     private static Vec3 nextAirMotion = Vec3.ZERO;
     private static double prevRotationYawHead = 0;
     public Bhop() {
+        // server and client side
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
-
-        BhopCreativeModeTabs.register(modEventBus);
-
-        BhopBlocks.register(modEventBus);
         BhopItems.register(modEventBus);
+        BhopBlocks.register(modEventBus);
 
-        modEventBus.addListener(this::commonSetup);
-        modEventBus.addListener(this::addCreative);
-        modEventBus.addListener(this::registerBindings);
-        MinecraftForge.EVENT_BUS.register(this);
+        // server side
+        DistExecutor.safeRunWhenOn(Dist.DEDICATED_SERVER, () -> () -> {
+            MinecraftForge.EVENT_BUS.addListener(BhopServer::onServerTick);
+            MinecraftForge.EVENT_BUS.addListener(BhopServer::onServerSetup);
+        });
+
+        // client side
+        DistExecutor.safeRunWhenOn(Dist.CLIENT, () -> () -> {
+            mc = Minecraft.getInstance();
+            TOGGLEKEY = Lazy.of(() -> new KeyMapping("key.bhop.toggle_bhop", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_K, "key.categories.bhop.bhop_binds"));
+            modEventBus.addListener(this::commonSetup);
+            CREATIVE_MODE_TABS.register(modEventBus);
+            modEventBus.addListener(this::registerBindings);
+            MinecraftForge.EVENT_BUS.register(this); // This line should only be present on the client side
+        });
     }
+
     private static double clamp(double val, double min, double max) {
         return Math.max(min, Math.min(max, val));
     }
@@ -125,22 +125,9 @@ public class Bhop {
 
     }
 
-    private void addCreative(BuildCreativeModeTabContentsEvent event) {
-
-    }
-
     @SubscribeEvent
-    public void onServerStarting(ServerStartingEvent event) {
-        LOGGER.info("MC-rbhop has loaded, have fun ig.");
-    }
-
-    @SubscribeEvent
-    public void onPlayerLeave(PlayerEvent.PlayerLoggedOutEvent event) {
-
-    }
-
-    @SubscribeEvent
-    public void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
+    public void onClientPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
+        LOGGER.info("test");
         event.getEntity().displayClientMessage(Component.literal("Thank you for using the bhop mod based on the Roblox bhop physics!\nyou can use the \"" +  ((char) TOGGLEKEY.get().getKey().getValue()) + "\" key on your keyboard to disable the physics at any time."), false);
     }
 
@@ -177,18 +164,9 @@ public class Bhop {
         }
     }
 
-    @Mod.EventBusSubscriber(modid = MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.DEDICATED_SERVER)
-    public static class ServerModEvents {
-
-        @SubscribeEvent
-        public static void onServerSetup(FMLDedicatedServerSetupEvent event) {
-            LOGGER.info("BhopServer has started.");
-            MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
-            if (server.isDedicatedServer() && server.isRunning()) {
-                BhopServer serverOnly = new BhopServer();
-                serverOnly.executeServerSide();
-            }
-        }
+    @SubscribeEvent
+    public static void onServerStarting(ServerStartingEvent event) {
+        LOGGER.info("MC-rbhop has loaded, have fun ig.");
     }
 
     @Mod.EventBusSubscriber(modid = MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
