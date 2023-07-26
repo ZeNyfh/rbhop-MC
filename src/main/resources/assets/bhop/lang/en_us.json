@@ -1,5 +1,5 @@
 {
-  "creativetab.Bhop_tab": "bhop",
+  "creativetab.bhop_tab": "bhop",
 
   "block.bhop.checkpoint_trigger": "Checkpoint Trigger",
   "block.bhop.spawn_trigger": "Spawn Trigger",
