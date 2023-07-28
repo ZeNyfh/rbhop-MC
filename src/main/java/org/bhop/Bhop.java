@@ -5,7 +5,12 @@ import com.mojang.logging.LogUtils;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
@@ -72,6 +77,7 @@ public class Bhop {
     public static void airAccelerate(LocalPlayer player) {
         // this will update for every tick in the onTick() event
         final double frictionFactor = 0.8;
+
         if (player.horizontalCollision || player.minorHorizontalCollision) {
             // Apply the friction force to reduce the movement
             Vec3 deltaM = player.getDeltaMovement();
@@ -135,32 +141,31 @@ public class Bhop {
     public void onClientTick(TickEvent.ClientTickEvent event) {
         if (event.phase == TickEvent.Phase.END) {
             try {
-                // check if player exists
                 LocalPlayer player = mc.player;
-                if (player == null) {
-                    return;
-                }
-
+                if (player == null) return;
                 if (TOGGLEKEY.get().isDown()) {
                     TOGGLEKEY.get().setDown(false);
                     physEnabled = !physEnabled;
                     mc.player.displayClientMessage(Component.literal("bhop physics are now: " + physEnabled), true);
+                    if (!physEnabled) return;
                 }
-                if (!physEnabled) {
-                    return;
-                }
-
-                // do air acceleration
-                player.setSprinting(false);
-                motion = player.getDeltaMovement();
-                if (player.input.jumping || !player.onGround()) {
-                    airAccelerate(player);
-                } else if (player.onGround()) {
-                    nextAirMotion = Vec3.ZERO;
-                }
+                ClientAccel(player);
             } catch (Exception e) {
                 mc.player.sendSystemMessage(Component.literal(e.getLocalizedMessage()));
             }
+        }
+    }
+
+
+
+
+    private static void ClientAccel(LocalPlayer player) {
+        player.setSprinting(false);
+        motion = player.getDeltaMovement();
+        if (player.input.jumping || !player.onGround()) {
+            airAccelerate(player);
+        } else if (player.onGround()) {
+            nextAirMotion = Vec3.ZERO;
         }
     }
 
