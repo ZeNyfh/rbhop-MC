@@ -10,5 +10,6 @@
   "item.bhop.trigger_wrench": "Trigger Wrench",
 
   "key.bhop.toggle_bhop": "Toggle bhop Physics",
+  "key.bhop.restart": "Restart Current Run",
   "key.categories.bhop.bhop_binds": "Bhop Binds"
 }

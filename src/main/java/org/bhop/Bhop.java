@@ -6,6 +6,11 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.TextColor;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
@@ -26,6 +31,8 @@ import org.bhop.items.BhopItems;
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
 
+import java.awt.*;
+
 import static org.bhop.items.BhopCreativeModeTabs.CREATIVE_MODE_TABS;
 
 // The value here should match an entry in the META-INF/mods.toml file
@@ -34,6 +41,7 @@ public class Bhop {
     public static final String MODID = "bhop";
     public static Minecraft mc = null;
     public static Lazy<KeyMapping> TOGGLEKEY = null;
+    public static Lazy<KeyMapping> RESTARTKEY = null;
     public static final Logger LOGGER = LogUtils.getLogger();
     private static final double GAIN_VAR = 0.1;
     private static final double pi = Math.PI;
@@ -58,6 +66,7 @@ public class Bhop {
         DistExecutor.safeRunWhenOn(Dist.CLIENT, () -> () -> {
             mc = Minecraft.getInstance();
             TOGGLEKEY = Lazy.of(() -> new KeyMapping("key.bhop.toggle_bhop", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_K, "key.categories.bhop.bhop_binds"));
+            RESTARTKEY = Lazy.of(() -> new KeyMapping("key.bhop.restart", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_R, "key.categories.bhop.bhop_binds"));
             modEventBus.addListener(this::commonSetup);
             CREATIVE_MODE_TABS.register(modEventBus);
             modEventBus.addListener(this::registerBindings);
@@ -102,7 +111,7 @@ public class Bhop {
         int SmW = W - S;
         String stringUnits = String.format("%.2f", units * 50.0);
         optimalScore = optimalScore * 100.0;
-        player.displayClientMessage(Component.literal("Units: " + stringUnits + " | " + "Gauge score: " + optimalScore), true); // change to be GUIs, can be toggled with client side commands too
+        player.displayClientMessage(generateScoreMessage((int) optimalScore, "Units: " + stringUnits), true); // change to be GUIs, can be toggled with client side commands too
         Vec3 KeyAngleData = Vec3.ZERO;
         if (DmA != 0 || SmW != 0) {
             KeyAngleData = new Vec3(DmA * ycos + SmW * ysin, 0, SmW * ycos - DmA * ysin).normalize();
@@ -120,6 +129,7 @@ public class Bhop {
     @SubscribeEvent
     public void registerBindings(RegisterKeyMappingsEvent event) {
         event.register(TOGGLEKEY.get());
+        event.register(RESTARTKEY.get());
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
@@ -138,12 +148,16 @@ public class Bhop {
             try {
                 LocalPlayer player = mc.player;
                 if (player == null) return;
+                if (RESTARTKEY.get().isDown()) {
+                    RESTARTKEY.get().setDown(false);
+                    player.kill(); // REPLACE WITH NBT TP LOGIC
+                }
                 if (TOGGLEKEY.get().isDown()) {
                     TOGGLEKEY.get().setDown(false);
                     physEnabled = !physEnabled;
                     mc.player.displayClientMessage(Component.literal("bhop physics are now: " + physEnabled), true);
                 }
-                if (!physEnabled) return;
+                if (!physEnabled || player.getAbilities().flying) return;
                 ClientAccel(player);
             } catch (Exception e) {
                 mc.player.sendSystemMessage(Component.literal(e.getLocalizedMessage()));
@@ -151,15 +165,26 @@ public class Bhop {
         }
     }
 
+    private static TextColor getScoreColor(int optimalScore) {
+        int green = (int) (255 * (1 - Math.abs(optimalScore - 50) / 50.0));
+        int red = (int) (255 * (Math.abs(optimalScore - 50) / 50.0));
+        return TextColor.fromRgb(red << 16 | green << 8);
+    }
 
-
+    private static MutableComponent generateScoreMessage(int optimalScore, String units) {
+        TextColor scoreColor = getScoreColor(optimalScore);
+        return Component.literal(units).setStyle(Style.EMPTY.withColor(scoreColor));
+    }
 
     private static void ClientAccel(LocalPlayer player) {
         player.setSprinting(false);
         motion = player.getDeltaMovement();
-        if (player.input.jumping || !player.onGround()) {
+        if (player.onGround()) {
+            player.addEffect(new MobEffectInstance(MobEffects.JUMP, 1, 0, false, true));
+        }
+        if ((player.input.jumping || !player.onGround()) && !player.getAbilities().flying) {
             airAccelerate(player);
-        } else if (player.onGround()) {
+        } else if (player.onGround() || player.getAbilities().flying) {
             nextAirMotion = Vec3.ZERO;
         }
     }
