@@ -5,12 +5,7 @@ import com.mojang.logging.LogUtils;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
@@ -147,8 +142,8 @@ public class Bhop {
                     TOGGLEKEY.get().setDown(false);
                     physEnabled = !physEnabled;
                     mc.player.displayClientMessage(Component.literal("bhop physics are now: " + physEnabled), true);
-                    if (!physEnabled) return;
                 }
+                if (!physEnabled) return;
                 ClientAccel(player);
             } catch (Exception e) {
                 mc.player.sendSystemMessage(Component.literal(e.getLocalizedMessage()));

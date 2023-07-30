@@ -20,6 +20,7 @@ public class BhopCreativeModeTabs {
                         pOutput.accept(BhopBlocks.CHECKPOINT_TRIGGER.get());
                         pOutput.accept(BhopBlocks.END_TRIGGER.get());
                         pOutput.accept(BhopBlocks.TP_TRIGGER.get());
+                        pOutput.accept(BhopItems.TRIGGERWRENCH.get());
                     })
                     .build());
 }

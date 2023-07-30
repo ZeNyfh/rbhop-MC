@@ -10,11 +10,8 @@ import org.bhop.Bhop;
 public class BhopItems {
     public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, Bhop.MODID);
 
-    public static final RegistryObject<Item> KILLTRIGGER = ITEMS.register("killtrigger", () -> new Item(new Item.Properties()));
-    public static final RegistryObject<Item> SPAWNTRIGGER = ITEMS.register("spawntrigger", () -> new Item(new Item.Properties()));
-    public static final RegistryObject<Item> CHECKPOINTTRIGGER = ITEMS.register("checkpointtrigger", () -> new Item(new Item.Properties()));
-    public static final RegistryObject<Item> ENDTRIGGER = ITEMS.register("endtrigger", () -> new Item(new Item.Properties()));
-    public static final RegistryObject<Item> TPTRIGGER = ITEMS.register("tptrigger", () -> new Item(new Item.Properties()));
+
+    public static final RegistryObject<Item> TRIGGERWRENCH = ITEMS.register("trigger_wrench", () -> new Item(new Item.Properties()));
     public static void register(IEventBus eventBus) {
         ITEMS.register(eventBus);
     }
