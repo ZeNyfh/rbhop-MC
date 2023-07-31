@@ -26,12 +26,15 @@ import static org.bhop.Bhop.LOGGER;
 public class BhopServer {
     private static HashMap<Player, Boolean> isInRun = new HashMap<>();
     private static HashMap<Player, Float> playerTime = new HashMap<>();
-    @SubscribeEvent
+    private static List<Block> previousBlocks = null;
+
     public static void onServerTick(TickEvent.ServerTickEvent event) {
         if (event.phase == TickEvent.Phase.START) {
             for (ServerPlayer player : event.getServer().getPlayerList().getPlayers()) {
                 triggerCollideCheck(player);
-
+                if (isInRun.get(player)) {
+                    playerTime.put(player, playerTime.get(player) + 0.05F);
+                }
             }
         }
     }
@@ -40,26 +43,38 @@ public class BhopServer {
         if (player.isCreative()) return;
         BlockPos blockPos = player.getOnPos();
         Level world = player.level();
-        List<Block> blocks = Arrays.asList(world.getBlockState(blockPos.above(1)).getBlock(), world.getBlockState(blockPos.above(2)).getBlock());
-        if (blocks.contains(BhopBlocks.KILL_TRIGGER.get())) player.kill();
+        List<Block> blocks = Arrays.asList(
+                world.getBlockState(blockPos.above(1)).getBlock(),
+                world.getBlockState(blockPos.above(2)).getBlock()
+        );
+
+        if (blocks.contains(BhopBlocks.KILL_TRIGGER.get())) {
+            player.kill();
+        }
+
+        try {
+            if (previousBlocks.contains(BhopBlocks.SPAWN_TRIGGER.get())) {
+                isInRun.put(player, true);
+            }
+        } catch (Exception ignored){}
 
         if (blocks.contains(BhopBlocks.SPAWN_TRIGGER.get())) {
-            if (!player.onGround()) { // needs check for is jumping
+            if (!player.onGround()) {
                 isInRun.put(player, true);
-                playerTime.put(player, playerTime.get(player) + 0.05F);
             } else {
                 isInRun.put(player, false);
             }
         }
 
-        if (blocks.contains(BhopBlocks.END_TRIGGER.get())) {
-            if (isInRun.get(player)) {
-                sendTimerMessage(player, playerTime.get(player));
-
-                isInRun.put(player, false);
-            }
+        if (blocks.contains(BhopBlocks.END_TRIGGER.get()) && isInRun.get(player)) {
+            isInRun.put(player, false);
+            sendTimerMessage(player, playerTime.get(player));
+            playerTime.put(player, 0F);
         }
+        previousBlocks = blocks;
     }
+
+
 
     @SubscribeEvent
     public static void onServerSetup(FMLDedicatedServerSetupEvent event) {
@@ -80,10 +95,11 @@ public class BhopServer {
 
     private static void sendTimerMessage(ServerPlayer player, Float time) {
         try {
+            double roundedTime = Math.round(time * 20.0) / 20.0;
             MinecraftServer server = player.getServer();
             assert server != null;
             for (ServerPlayer serverPlayer : server.getPlayerList().getPlayers()) {
-                serverPlayer.sendSystemMessage(Component.literal("§8[§2Timer§8]§f" + player.getName().getString() + " finished with a time of " + time + " Seconds"));
+                serverPlayer.sendSystemMessage(Component.literal("§8[§2Timer§8]§f " + player.getName().getString() + " finished with a time of " + roundedTime + " Seconds"));
             }
         } catch (Exception ignored){}
     }
