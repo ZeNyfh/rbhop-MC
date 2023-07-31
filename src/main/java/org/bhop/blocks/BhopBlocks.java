@@ -27,9 +27,9 @@ public class BhopBlocks {
             () -> new Block(TRIGGER_PROPERTIES));
     public static final RegistryObject<Block> SPAWN_TRIGGER = registerBlock("spawn_trigger",
             () -> new Block(TRIGGER_PROPERTIES));
-    public static final RegistryObject<Block> TP_TRIGGER = registerBlock("end_trigger",
+    public static final RegistryObject<Block> TP_TRIGGER = registerBlock("tp_trigger",
             () -> new Block(TRIGGER_PROPERTIES));
-    public static final RegistryObject<Block> END_TRIGGER = registerBlock("tp_trigger",
+    public static final RegistryObject<Block> END_TRIGGER = registerBlock("end_trigger",
             () -> new Block(TRIGGER_PROPERTIES));
     public static final RegistryObject<Block> CHECKPOINT_TRIGGER = registerBlock("checkpoint_trigger",
             () -> new Block(TRIGGER_PROPERTIES));
