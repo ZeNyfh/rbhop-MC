@@ -96,10 +96,10 @@ public class Bhop {
         motion = player.getDeltaMovement();
         double units = Math.sqrt(Math.pow(motion.x, 2) + Math.pow(motion.z, 2));
 
-        double yaw = Math.atan2(-player.getLookAngle().x, player.getLookAngle().z);
+        double yaw = Math.atan2(player.getLookAngle().x, player.getLookAngle().z);
 
         double ycos = Math.cos(yaw);
-        double ysin = -Math.sin(yaw);
+        double ysin = Math.sin(yaw);
         double optimalScore = clamp(Math.abs((yaw - prevRotationYawHead + pi) % tau - pi) / Math.atan2(GAIN_VAR, units), 0, 2);
         optimalScore = 1 - Math.abs(1 - optimalScore);
         // This clamps it to 0 -> 1 -> 0 instead of 0 -> 2 but impossible to know if over or under strafing
@@ -107,14 +107,16 @@ public class Bhop {
         int A = player.input.left ? 1 : 0;
         int W = player.input.up ? 1 : 0;
         int S = player.input.down ? 1 : 0;
-        int DmA = CurrentStyle.ResolveDmA(W, A, S, D);
-        int WmS = CurrentStyle.ResolveWmS(W, A, S, D);
+        // These aren't meant to be negative, but theres some unknown discrepancy between what I have as a reference and here
+        // Just deal with it, idk
+        int DmA = -CurrentStyle.ResolveDmA(W, A, S, D);
+        int SmW = -CurrentStyle.ResolveSmW(W, A, S, D);
         String stringUnits = String.format("%.2f", units * 50.0);
         optimalScore = optimalScore * 100.0;
         player.displayClientMessage(generateScoreMessage((int) optimalScore, "Units: " + stringUnits), true); // change to be GUIs, can be toggled with client side commands too
         Vec3 KeyAngleData = Vec3.ZERO;
-        if (DmA != 0 || WmS != 0) {
-            KeyAngleData = new Vec3(DmA * ycos + WmS * ysin, 0, WmS * ycos - DmA * ysin).normalize();
+        if (DmA != 0 || SmW != 0) {
+            KeyAngleData = new Vec3(DmA * ycos + SmW * ysin, 0, SmW * ycos - DmA * ysin).normalize();
         }
 
         Vec3 PlayerSpeed = player.getDeltaMovement();

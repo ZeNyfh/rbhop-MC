@@ -63,15 +63,15 @@ public class Styles {
         }
         public int ResolveDmA(int w, int a, int s, int d) {
             if (MissingRequiredKeys(w, a, s, d)) return 0;
-            a = Math.min(this.a, a);
             d = Math.min(this.d, d);
+            a = Math.min(this.a, a);
             return d - a;
         }
-        public int ResolveWmS(int w, int a, int s, int d) {
+        public int ResolveSmW(int w, int a, int s, int d) {
             if (MissingRequiredKeys(w, a, s, d)) return 0;
-            w = Math.min(this.w, w);
             s = Math.min(this.s, s);
-            return w - s;
+            w = Math.min(this.w, w);
+            return s - w;
         }
     }
     public static final Style[] AllStyles = new Style[]{
