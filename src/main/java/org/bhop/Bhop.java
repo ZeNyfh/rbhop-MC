@@ -108,7 +108,7 @@ public class Bhop {
         int W = player.input.up ? 1 : 0;
         int S = player.input.down ? 1 : 0;
         int DmA = CurrentStyle.ResolveDmA(W, A, S, D);
-        int WmS = CurrentStyle.ResolveSmW(W, A, S, D);
+        int WmS = CurrentStyle.ResolveWmS(W, A, S, D);
         String stringUnits = String.format("%.2f", units * 50.0);
         optimalScore = optimalScore * 100.0;
         player.displayClientMessage(generateScoreMessage((int) optimalScore, "Units: " + stringUnits), true); // change to be GUIs, can be toggled with client side commands too
