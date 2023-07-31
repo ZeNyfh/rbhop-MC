@@ -42,13 +42,13 @@ public class Bhop {
     public static Lazy<KeyMapping> TOGGLEKEY = null;
     public static Lazy<KeyMapping> RESTARTKEY = null;
     public static final Logger LOGGER = LogUtils.getLogger();
-    private static final double GAIN_VAR = 0.1;
     private static final double pi = Math.PI;
     private static final double tau = 2 * Math.PI;
     public static Vec3 motion = Vec3.ZERO;
     public static boolean physEnabled = true;
     private static Vec3 nextAirMotion = Vec3.ZERO;
     private static double prevRotationYawHead = 0;
+    private static Styles.Style CurrentStyle = Styles.DefaultStyle;
     public Bhop() {
         // server and client side
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
@@ -80,6 +80,7 @@ public class Bhop {
     public static void airAccelerate(LocalPlayer player) {
         // this will update for every tick in the onTick() event
         final double frictionFactor = 0.8;
+        final double GAIN_VAR = CurrentStyle.GetGains();
 
         if (player.horizontalCollision || player.minorHorizontalCollision) {
             // Apply the friction force to reduce the movement
@@ -106,8 +107,8 @@ public class Bhop {
         int A = player.input.left ? 1 : 0;
         int W = player.input.up ? 1 : 0;
         int S = player.input.down ? 1 : 0;
-        int DmA = A - D;
-        int SmW = W - S;
+        int DmA = CurrentStyle.ResolveDmA(W, A, S, D);
+        int SmW = CurrentStyle.ResolveSmW(W, A, S, D);
         String stringUnits = String.format("%.2f", units * 50.0);
         optimalScore = optimalScore * 100.0;
         player.displayClientMessage(generateScoreMessage((int) optimalScore, "Units: " + stringUnits), true); // change to be GUIs, can be toggled with client side commands too
