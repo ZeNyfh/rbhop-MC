@@ -69,9 +69,9 @@ public class Styles {
         }
         public int ResolveSmW(int w, int a, int s, int d) {
             if (MissingRequiredKeys(w, a, s, d)) return 0;
-            s = Math.min(this.s, s);
             w = Math.min(this.w, w);
-            return s - w;
+            s = Math.min(this.s, s);
+            return w - s;
         }
     }
     public static final Style[] AllStyles = new Style[]{

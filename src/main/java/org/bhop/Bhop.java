@@ -108,13 +108,13 @@ public class Bhop {
         int W = player.input.up ? 1 : 0;
         int S = player.input.down ? 1 : 0;
         int DmA = CurrentStyle.ResolveDmA(W, A, S, D);
-        int SmW = CurrentStyle.ResolveSmW(W, A, S, D);
+        int WmS = CurrentStyle.ResolveSmW(W, A, S, D);
         String stringUnits = String.format("%.2f", units * 50.0);
         optimalScore = optimalScore * 100.0;
         player.displayClientMessage(generateScoreMessage((int) optimalScore, "Units: " + stringUnits), true); // change to be GUIs, can be toggled with client side commands too
         Vec3 KeyAngleData = Vec3.ZERO;
-        if (DmA != 0 || SmW != 0) {
-            KeyAngleData = new Vec3(DmA * ycos + SmW * ysin, 0, SmW * ycos - DmA * ysin).normalize();
+        if (DmA != 0 || WmS != 0) {
+            KeyAngleData = new Vec3(DmA * ycos + WmS * ysin, 0, WmS * ycos - DmA * ysin).normalize();
         }
 
         Vec3 PlayerSpeed = player.getDeltaMovement();
