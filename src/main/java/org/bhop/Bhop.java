@@ -31,7 +31,6 @@ import org.bhop.items.BhopItems;
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
 
-import java.awt.*;
 
 import static org.bhop.items.BhopCreativeModeTabs.CREATIVE_MODE_TABS;
 
