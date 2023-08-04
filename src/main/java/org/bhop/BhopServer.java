@@ -2,12 +2,12 @@ package org.bhop;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.OutgoingChatMessage;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -18,14 +18,13 @@ import org.bhop.blocks.BhopBlocks;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
 
 import static org.bhop.Bhop.LOGGER;
 
 @Mod.EventBusSubscriber(modid = Bhop.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class BhopServer {
-    private static HashMap<Player, Boolean> isInRun = new HashMap<>();
-    private static HashMap<Player, Float> playerTime = new HashMap<>();
+    private static final HashMap<Player, Boolean> isInRun = new HashMap<>();
+    private static final HashMap<Player, Float> playerTime = new HashMap<>();
     private static List<Block> previousBlocks = null;
 
     public static void onServerTick(TickEvent.ServerTickEvent event) {
@@ -33,7 +32,7 @@ public class BhopServer {
             for (ServerPlayer player : event.getServer().getPlayerList().getPlayers()) {
                 triggerCollideCheck(player);
                 if (isInRun.get(player)) {
-                    playerTime.put(player, playerTime.get(player) + 0.05F);
+                    playerTime.put(player, playerTime.getOrDefault(player, 0F) + 0.05F);
                 }
             }
         }
@@ -59,7 +58,9 @@ public class BhopServer {
         } catch (Exception ignored){}
 
         if (blocks.contains(BhopBlocks.SPAWN_TRIGGER.get())) {
-            if (!player.onGround()) {
+            Vec3 motion = player.getDeltaMovement();
+            double units = Math.sqrt(Math.pow(motion.x, 2) + Math.pow(motion.z, 2))*50;
+            if (player.onGround() && units <= 5.89) {
                 isInRun.put(player, true);
             } else {
                 isInRun.put(player, false);
